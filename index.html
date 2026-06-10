@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM 제한 속도 안내 시스템</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: #f0f0f0; padding-top: 50px; }
+        .container { background-color: white; padding: 30px; border-radius: 15px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        button { padding: 15px 30px; font-size: 18px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .speed-display { font-size: 72px; font-weight: bold; color: #ff3b30; margin: 20px 0; }
+        .status { color: #666; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>현재 구역 제한 속도</h2>
+    <div class="speed-display" id="speedLimit">--</div>
+    <div style="font-size: 24px; margin-bottom: 30px;">km/h</div>
+    
+    <button onclick="connectBLE()">블루투스 연결하기</button>
+    <p class="status" id="statusLog">연결 대기 중...</p>
+</div>
+
+<script>
+const UUID_SERVICE = "0000ffe0-0000-1000-8000-00805f9b34fb";
+const UUID_CHARACTERISTIC = "0000ffe1-0000-1000-8000-00805f9b34fb";
+
+let bluetoothDevice = null;
+let rxCharacteristic = null;
+
+async function connectBLE() {
+    const log = document.getElementById('statusLog');
+    try {
+        log.innerText = "기기 검색 중...";
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+            acceptAllDevices: true,
+            optionalServices: [UUID_SERVICE]
+        });
+
+        log.innerText = "서버 연결 중...";
+        const server = await bluetoothDevice.gatt.connect();
+
+        log.innerText = "서비스 가져오는 중...";
+        const service = await server.getPrimaryService(UUID_SERVICE);
+
+        log.innerText = "특성 가져오는 중...";
+        rxCharacteristic = await service.getCharacteristic(UUID_CHARACTERISTIC);
+
+        await rxCharacteristic.startNotifications();
+        rxCharacteristic.addEventListener('characteristicvaluechanged', handleDataReceived);
+
+        log.innerText = "연결 성공! 실시간 데이터 수신 중...";
+    } catch (error) {
+        log.innerText = "오류 발생: " + error;
+        console.error(error);
+    }
+}
+
+// 아두이노에서 println으로 보낸 정수/실수 값을 받아서 화면에 바로 꽂아주는 함수
+function handleDataReceived(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder('utf-8');
+    const receivedData = decoder.decode(value).trim(); 
+    
+    console.log("아두이노가 보낸 값:", receivedData);
+    
+    if (receivedData.length > 0) {
+        document.getElementById('speedLimit').innerText = receivedData;
+    }
+}
+</script>
+</body>
+</html>
