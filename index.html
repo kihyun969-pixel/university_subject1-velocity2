@@ -234,7 +234,7 @@
 
                 // 2. 조도(환경) 시스템 제어 로직
                 const lightIcon = document.getElementById('lightIcon');
-                if (lightVal < 300) {
+                if (lightVal == 1) {
                     lightIcon.style.fill = '#ff3b30'; // 밤: 빨간색 전구 온!
                     lightIcon.style.filter = 'drop-shadow(0 0 6px rgba(255,59,48,0.6))'; // 빛나는 발광 효과 추가
                 } else {
