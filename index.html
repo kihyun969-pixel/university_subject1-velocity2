@@ -5,141 +5,162 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PM Safety Dashboard</title>
     <style>
-        /* 1. 기본 스타일 (애플 다크 모드 테마) */
+        /* 1. 기본 스타일 (기존 흰색 바탕 라이트 테마 유지) */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Urbanist", "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         body {
-            background-color: #000000;
-            color: #ffffff;
+            background-color: #f5f5f7; /* 연회색 바탕 */
+            color: #1d1d1f;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            overflow: hidden;
-        }
-
-        /* 2. 대시보드 메인 컨테이너 */
-        .container {
-            display: flex;
-            width: 100vw;
-            height: 100vh;
-            flex-direction: column; /* 세로모드 기본 */
             padding: 20px;
-            gap: 20px;
         }
 
-        /* 3. 가로모드 전용 레이아웃 (Slide 11 디자인 반영) */
+        /* 2. 대시보드 메인 카드 */
+        .container {
+            background-color: #ffffff; /* 흰색 바탕 상자 */
+            padding: 35px 30px;
+            border-radius: 32px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
+            display: flex;
+            flex-direction: column; /* 세로모드일 때는 위에서 아래로 */
+            transition: all 0.3s ease;
+        }
+
+        /* 3. 가로모드(Landscape) 레이아웃 분리 규칙 */
         @media (orientation: landscape) {
             .container {
-                flex-direction: row; /* 가로로 배치 */
-                padding: 30px;
+                flex-direction: row; /* 가로모드일 때 좌우 배치 */
+                max-width: 650px;
+                padding: 35px;
                 gap: 30px;
             }
             .display-panel {
-                flex: 2; /* 왼쪽 데이터 패널을 넓게 */
+                flex: 2; /* 왼쪽 데이터 영역 공간 확보 */
+                justify-content: space-between;
+            }
+            .status-icon-section {
+                margin-bottom: 0 !important; /* 하단 여백 제거하여 정렬 균형 맞춤 */
             }
             .control-panel {
-                flex: 0.7; /* 오른쪽 버튼 패널을 적절하게 */
-                flex-direction: column;
+                flex: 0.8; /* 오른쪽 버튼 영역 공간 확보 */
             }
             .connect-btn {
-                height: 100% !important; /* 버튼이 세로로 꽉 차도록 */
-                writing-mode: vertical-lr; /* 버튼 글자 세로 방향 (선택사항) */
+                height: 100% !important; /* 버튼 높이를 세로로 꽉 채움 */
+                writing-mode: vertical-lr; /* 글자 세로 방향 배열 */
                 text-orientation: upright;
-                letter-spacing: 5px;
-                font-size: 20px !important;
+                letter-spacing: 4px;
+                font-size: 18px !important;
+                border-radius: 24px !important;
             }
         }
 
-        /* 4. 왼쪽 디스플레이 패널 (데이터 영역) */
+        /* 4. 데이터 영역 내부 레이아웃 */
         .display-panel {
-            background-color: #111111;
-            border-radius: 35px;
-            border: 2px solid #222222;
-            padding: 40px;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            flex-grow: 1;
-        }
-
-        /* 속도 표시부 */
-        .speed-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
             width: 100%;
         }
-        .current-speed-group {
-            text-align: left;
+        .speed-section {
+            margin-bottom: 25px;
+            text-align: center;
         }
-        .safe-speed-group {
-            text-align: right;
+        .speed-row {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+        }
+        .speed-box {
+            padding: 0 15px;
+        }
+        .safe-speed-box {
+            border-left: 1px solid #e5e5ea;
         }
         .label {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            color: #888888;
-            margin-bottom: 10px;
+            color: #86868b;
+            margin-bottom: 8px;
             display: block;
         }
         .current-speed {
-            font-size: 130px;
+            font-size: 110px;
             font-weight: 800;
-            line-height: 1;
-            letter-spacing: -5px;
-            color: #ffffff;
+            color: #1d1d1f;
+            letter-spacing: -4px;
+            line-height: 100px;
         }
         .safe-speed {
-            font-size: 65px;
+            font-size: 55px;
             font-weight: 700;
-            line-height: 1;
-            color: #ff3b30; /* 안전 속도는 레드 */
+            color: #ff3b30;
+            letter-spacing: -2px;
+            line-height: 55px;
         }
-
-        /* 하단 아이콘 영역 */
-        .icon-footer {
-            display: flex;
-            justify-content: center;
-            gap: 60px;
-            border-top: 1px solid #222222;
-            padding-top: 30px;
-        }
-        .icon-svg {
-            width: 38px;
-            height: 38px;
-            fill: #333333; /* 초기 비활성 색상 */
-            transition: all 0.4s ease;
-        }
-
-        /* 5. 오른쪽 컨트롤 패널 (버튼 영역) */
-        .control-panel {
-            display: flex;
-            flex-grow: 1;
-        }
-        .connect-btn {
-            width: 100%;
-            height: 80px; /* 세로모드일 때 높이 */
-            background-color: #0071e3;
-            color: #ffffff;
-            border: none;
-            border-radius: 30px;
+        .unit {
             font-size: 18px;
             font-weight: 700;
-            cursor: pointer;
+            color: #1d1d1f;
+            margin-top: 12px;
+        }
+
+        /* 5. 환경 아이콘 레이아웃 */
+        .status-icon-section {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-bottom: 25px;
+            border-top: 1px solid #f2f2f7;
+            border-bottom: 1px solid #f2f2f7;
+            padding: 20px 0;
+        }
+        .icon-widget {
+            margin: 0 22px;
+            text-align: center;
+        }
+        .icon-svg {
+            width: 32px;
+            height: 32px;
+            margin-bottom: 6px;
+            fill: #8e8e93; /* 기본 비활성화 회색 아이콘 */
             transition: all 0.3s ease;
+        }
+        .status-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #a1a1a6;
+        }
+
+        /* 6. 제어 버튼 레이아웃 */
+        .control-panel {
+            display: flex;
+            width: 100%;
+        }
+        .connect-btn {
+            background-color: #0071e3; /* 애플 오리지널 블루 */
+            color: #ffffff;
+            border: none;
+            padding: 14px 0;
+            width: 100%;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 980px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 10px 20px rgba(0, 113, 227, 0.2);
         }
         .connect-btn.active {
-            background-color: #34c759; /* 연결 시 초록색 */
-            box-shadow: 0 10px 20px rgba(52, 199, 89, 0.2);
+            background-color: #34c759; /* 연결 성공 시 초록색 변환 */
         }
     </style>
 </head>
@@ -148,27 +169,41 @@
     <div class="container">
         
         <div class="display-panel">
-            <div class="speed-header">
-                <div class="current-speed-group">
-                    <span class="label">CURRENT SPEED</span>
-                    <div id="currentSpeed" class="current-speed">--</div>
+            <div class="speed-section">
+                <div class="speed-row">
+                    <div class="speed-box">
+                        <span class="label">현재 속도</span>
+                        <div id="currentSpeed" class="current-speed">--</div>
+                    </div>
+                    <div class="speed-box safe-speed-box">
+                        <span class="label">안전 속도</span>
+                        <div id="safeSpeed" class="safe-speed">--</div>
+                    </div>
                 </div>
-                <div class="safe-speed-group">
-                    <span class="label" style="color: #ff3b30;">SAFE LIMIT</span>
-                    <div id="safeSpeed" class="safe-speed">--</div>
-                </div>
+                <div class="unit">km/h</div>
             </div>
 
-            <div class="icon-footer">
-                <svg id="lightIcon" class="icon-svg" viewBox="0 0 24 24">
-                    <path d="M12 2C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.5 19H9.5c-.55 0-1 .45-1 1s.45 1 1 1h5c.55 0 1-.45 1-1s-.45-1-1-1z"/>
-                </svg>
-                <svg id="rainIcon" class="icon-svg" viewBox="0 0 24 24">
-                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
-                </svg>
-                <svg id="slipIcon" class="icon-svg" viewBox="0 0 24 24">
-                    <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
-                </svg>
+            <div class="status-icon-section">
+                <div class="icon-widget">
+                    <svg id="lightIcon" class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M12 2C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.5 19H9.5c-.55 0-1 .45-1 1s.45 1 1 1h5c.55 0 1-.45 1-1s-.45-1-1-1z"/>
+                    </svg>
+                    <div class="status-label">환경</div>
+                </div>
+
+                <div class="icon-widget">
+                    <svg id="rainIcon" class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                    </svg>
+                    <div class="status-label">강수</div>
+                </div>
+
+                <div class="icon-widget">
+                    <svg id="slipIcon" class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/>
+                    </svg>
+                    <div class="status-label">노면</div>
+                </div>
             </div>
         </div>
 
@@ -198,7 +233,6 @@
                 characteristic.addEventListener('characteristicvaluechanged', handleDataChanged);
             } catch (error) {
                 console.log(error);
-                alert("연결 실패: " + error.message);
             }
         }
 
@@ -216,47 +250,49 @@
                 const rainVal = dataArray[3].trim();
                 const slipVal = dataArray[4].trim();
 
-                // 1. 속도 업데이트 (브레이크 문구 포함)
                 document.getElementById('safeSpeed').innerText = safeSpeed;
                 document.getElementById('currentSpeed').innerText = currentSpeed;
                 
-                // 브레이크 상황 시 폰트 크기 조절
+                // 브레이크 상황 문구 최적화 폰트 크기 조정
                 if(currentSpeed === "브레이크") {
-                    document.getElementById('currentSpeed').style.fontSize = "60px";
+                    document.getElementById('currentSpeed').style.fontSize = "50px";
                 } else {
-                    document.getElementById('currentSpeed').style.fontSize = "130px";
+                    document.getElementById('currentSpeed').style.fontSize = "110px";
                 }
 
-                // 2. 조도(환경) 아이콘 색상
+                // 조도 센서 컬러 변환 (밤일 때 빨간색 발광)
                 const lightIcon = document.getElementById('lightIcon');
                 if (lightVal < 300) {
-                    lightIcon.style.fill = '#ff3b30'; // 빨간색
-                    lightIcon.style.filter = 'drop-shadow(0 0 8px #ff3b30)';
+                    lightIcon.style.fill = '#ff3b30';
+                    lightIcon.style.filter = 'drop-shadow(0 0 6px rgba(255,59,48,0.5))';
                 } else {
-                    lightIcon.style.fill = '#333333';
+                    lightIcon.style.fill = '#8e8e93';
                     lightIcon.style.filter = 'none';
                 }
 
-                // 3. 강수 아이콘 색상
+                // 강수 센서 컬러 변환 (비올 때 파란색 발광)
                 const rainIcon = document.getElementById('rainIcon');
                 if (rainVal === '1') {
-                    rainIcon.style.fill = '#007aff'; // 파란색
-                    rainIcon.style.filter = 'drop-shadow(0 0 8px #007aff)';
+                    rainIcon.style.fill = '#007aff';
+                    rainIcon.style.filter = 'drop-shadow(0 0 6px rgba(0,122,255,0.4))';
                 } else {
-                    rainIcon.style.fill = '#333333';
+                    rainIcon.style.fill = '#8e8e93';
                     rainIcon.style.filter = 'none';
                 }
 
-                // 4. 노면 아이콘 색상
+                // 노면 미끄러움 3단계 강도 컬러 변환
                 const slipIcon = document.getElementById('slipIcon');
-                if (slipVal === '1') slipIcon.style.fill = '#ffcc00';
-                else if (slipVal === '2') slipIcon.style.fill = '#ff9500';
-                else if (slipVal === '3') {
-                    slipIcon.style.fill = '#ff3b30';
-                    slipIcon.style.filter = 'drop-shadow(0 0 8px #ff3b30)';
-                }
-                else {
-                    slipIcon.style.fill = '#333333';
+                if (slipVal === '1') {
+                    slipIcon.style.fill = '#ffcc00'; // 노란색
+                    slipIcon.style.filter = 'none';
+                } else if (slipVal === '2') {
+                    slipIcon.style.fill = '#ff9500'; // 주황색
+                    slipIcon.style.filter = 'none';
+                } else if (slipVal === '3') {
+                    slipIcon.style.fill = '#ff3b30'; // 빨간색 위험
+                    slipIcon.style.filter = 'drop-shadow(0 0 6px rgba(255,59,48,0.5))';
+                } else {
+                    slipIcon.style.fill = '#8e8e93'; // 기본 정상 노면
                     slipIcon.style.filter = 'none';
                 }
             }
