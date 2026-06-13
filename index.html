@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PM Safety Dashboard</title>
     <style>
-        /* 1. 기본 스타일 (오리지널 라이트 테마 유지) */
+        /* 1. 기본 스타일 (흰색 바탕 라이트 테마 유지) */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -20,7 +20,6 @@
             align-items: center;
             min-height: 100vh;
             padding: 20px;
-            transition: background-color 0.3s ease;
         }
 
         /* 2. 대시보드 메인 카드 */
@@ -33,40 +32,35 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            transition: background-color 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.3s ease;
         }
 
-        /* 3. 가로모드(Landscape) 레이아웃 대응 */
+        /* 3. 가로모드(Landscape) 레이아웃 - 버튼 슬림화 적용 */
         @media (orientation: landscape) {
             .container {
                 flex-direction: row;
-                max-width: 680px;
+                max-width: 680px; /* 시인성을 위해 전체 가로폭 살짝 조정 */
                 padding: 35px;
                 gap: 25px;
             }
             .display-panel {
-                flex: 2.2;
+                flex: 2.2; /* 왼쪽 데이터 영역을 훨씬 더 넓게 할당 */
                 justify-content: space-between;
             }
             .status-icon-section {
                 margin-bottom: 0 !important;
             }
             .control-panel {
-                flex: 0.45;
+                flex: 0.45; /* ★ 핵심 수정: 기존 0.8에서 0.45로 줄여 버튼을 가로로 슬림하게 변경 */
             }
             .connect-btn {
-                height: 100% !important;
+                height: 100% !important; /* 세로로 꽉 차는 피드백은 그대로 유지 */
                 writing-mode: vertical-lr;
                 text-orientation: upright;
-                letter-spacing: 6px;
-                font-size: 15px !important;
+                letter-spacing: 6px; /* 슬림해진 폭에 맞춰 글자 간격 조정 */
+                font-size: 15px !important; /* 폰트 크기 최적화 */
                 border-radius: 20px !important;
                 padding: 0 !important;
-            }
-            /* 가로모드일 때 다크모드 버튼 간격 최적화 */
-            .theme-toggle-btn {
-                top: -15px !important;
-                right: 0px !important;
             }
         }
 
@@ -75,7 +69,6 @@
             display: flex;
             flex-direction: column;
             width: 100%;
-            position: relative; /* 다크모드 버튼 배치를 위한 기준점 지정 */
         }
         .speed-section {
             margin-bottom: 25px;
@@ -91,7 +84,6 @@
         }
         .safe-speed-box {
             border-left: 1px solid #e5e5ea;
-            transition: border-color 0.3s ease;
         }
         .label {
             font-size: 13px;
@@ -99,7 +91,6 @@
             color: #86868b;
             margin-bottom: 8px;
             display: block;
-            transition: color 0.3s ease;
         }
         .current-speed {
             font-size: 110px;
@@ -107,7 +98,6 @@
             color: #1d1d1f;
             letter-spacing: -4px;
             line-height: 100px;
-            transition: color 0.3s ease;
         }
         .safe-speed {
             font-size: 55px;
@@ -121,10 +111,9 @@
             font-weight: 700;
             color: #1d1d1f;
             margin-top: 12px;
-            transition: color 0.3s ease;
         }
 
-        /* 5. 환경 아이콘 및 동적 이펙트 스타일 */
+        /* 5. 환경 아이콘 레이아웃 */
         .status-icon-section {
             display: flex;
             justify-content: center;
@@ -133,7 +122,6 @@
             border-top: 1px solid #f2f2f7;
             border-bottom: 1px solid #f2f2f7;
             padding: 20px 0;
-            transition: border-color 0.3s ease;
         }
         .icon-widget {
             margin: 0 22px;
@@ -143,7 +131,7 @@
             width: 32px;
             height: 32px;
             margin-bottom: 6px;
-            fill: #8e8e93; /* 기본 라이트모드 소등 색상 */
+            fill: #8e8e93;
             transition: all 0.3s ease;
         }
         .status-label {
@@ -152,23 +140,7 @@
             color: #a1a1a6;
         }
 
-        /* [아이콘 상태별 실시간 컬러 체제 클래스] */
-        .icon-svg.active-light {
-            fill: #ff3b30 !important;
-            filter: drop-shadow(0 0 6px rgba(255,59,48,0.5)) !important;
-        }
-        .icon-svg.active-rain {
-            fill: #007aff !important;
-            filter: drop-shadow(0 0 6px rgba(0,122,255,0.4)) !important;
-        }
-        .icon-svg.active-slip1 { fill: #ffcc00 !important; }
-        .icon-svg.active-slip2 { fill: #ff9500 !important; }
-        .icon-svg.active-slip3 {
-            fill: #ff3b30 !important;
-            filter: drop-shadow(0 0 6px rgba(255,59,48,0.5)) !important;
-        }
-
-        /* 6. 제어 버튼 */
+        /* 6. 제어 버튼 레이아웃 */
         .control-panel {
             display: flex;
             width: 100%;
@@ -191,61 +163,6 @@
         .connect-btn.active {
             background-color: #34c759;
         }
-
-        /* 7. 미니멀 다크모드 전환 버튼 스타일 */
-        .theme-toggle-btn {
-            position: absolute;
-            top: -15px;
-            right: -10px;
-            background-color: #e5e5ea;
-            color: #1d1d1f;
-            border: none;
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transition: all 0.3s ease;
-            z-index: 10;
-        }
-
-        /* ========================================================
-           8. [핵심] 다크모드 역전 스타일 오버라이딩 (디자인 유지용)
-        ======================================================== */
-        body.dark-mode {
-            background-color: #0a0a0c; /* 어두운 배경 */
-        }
-        body.dark-mode .container {
-            background-color: #1c1c1e; /* 어두운 카드 상자 */
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-        }
-        body.dark-mode .current-speed {
-            color: #ffffff;
-        }
-        body.dark-mode .unit {
-            color: #ffffff;
-        }
-        body.dark-mode .label {
-            color: #8e8e93;
-        }
-        body.dark-mode .safe-speed-box {
-            border-left-color: #2c2c2e;
-        }
-        body.dark-mode .status-icon-section {
-            border-top-color: #2c2c2e;
-            border-bottom-color: #2c2c2e;
-        }
-        body.dark-mode .icon-svg {
-            fill: #48484a; /* 다크모드 시 미발광 센서는 더 어두운 회색으로 처리 */
-        }
-        body.dark-mode .theme-toggle-btn {
-            background-color: #2c2c2e;
-            color: #ffffff;
-        }
     </style>
 </head>
 <body>
@@ -253,9 +170,6 @@
     <div class="container">
         
         <div class="display-panel">
-            
-            <button id="themeToggle" class="theme-toggle-btn" onclick="toggleTheme()">🌙</button>
-
             <div class="speed-section">
                 <div class="speed-row">
                     <div class="speed-box">
@@ -303,19 +217,6 @@
     <script>
         let characteristic = null;
 
-        // 테마 토글 제어 스크립트
-        function toggleTheme() {
-            const body = document.body;
-            const btn = document.getElementById('themeToggle');
-            body.classList.toggle('dark-mode');
-            
-            if (body.classList.contains('dark-mode')) {
-                btn.innerText = '☀️'; // 다크모드 진입 시 해 기호로 변환
-            } else {
-                btn.innerText = '🌙'; // 라이트모드 복귀 시 달 기호로 변환
-            }
-        }
-
         async function connectBLE() {
             const btn = document.getElementById('connectBtn');
             try {
@@ -359,31 +260,37 @@
                     document.getElementById('currentSpeed').style.fontSize = "110px";
                 }
 
-                // 1. 조도(환경) 클래스 분기 제어
                 const lightIcon = document.getElementById('lightIcon');
                 if (lightVal < 300) {
-                    lightIcon.classList.add('active-light');
+                    lightIcon.style.fill = '#ff3b30';
+                    lightIcon.style.filter = 'drop-shadow(0 0 6px rgba(255,59,48,0.5))';
                 } else {
-                    lightIcon.classList.remove('active-light');
+                    lightIcon.style.fill = '#8e8e93';
+                    lightIcon.style.filter = 'none';
                 }
 
-                // 2. 강수 클래스 분기 제어
                 const rainIcon = document.getElementById('rainIcon');
                 if (rainVal === '1') {
-                    rainIcon.classList.add('active-rain');
+                    rainIcon.style.fill = '#007aff';
+                    rainIcon.style.filter = 'drop-shadow(0 0 6px rgba(0,122,255,0.4))';
                 } else {
-                    rainIcon.classList.remove('active-rain');
+                    rainIcon.style.fill = '#8e8e93';
+                    rainIcon.style.filter = 'none';
                 }
 
-                // 3. 노면 클래스 분기 제어
                 const slipIcon = document.getElementById('slipIcon');
-                slipIcon.classList.remove('active-slip1', 'active-slip2', 'active-slip3');
                 if (slipVal === '1') {
-                    slipIcon.classList.add('active-slip1');
+                    slipIcon.style.fill = '#ffcc00';
+                    slipIcon.style.filter = 'none';
                 } else if (slipVal === '2') {
-                    slipIcon.classList.add('active-slip2');
+                    slipIcon.style.fill = '#ff9500';
+                    slipIcon.style.filter = 'none';
                 } else if (slipVal === '3') {
-                    slipIcon.classList.add('active-slip3');
+                    slipIcon.style.fill = '#ff3b30';
+                    slipIcon.style.filter = 'drop-shadow(0 0 6px rgba(255,59,48,0.5))';
+                } else {
+                    slipIcon.style.fill = '#8e8e93';
+                    slipIcon.style.filter = 'none';
                 }
             }
         }
