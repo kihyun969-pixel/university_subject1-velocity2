@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PM Safety Dashboard</title>
     <style>
-        /* 1. 기본 스타일 (기존 흰색 바탕 라이트 테마 유지) */
+        /* 1. 기본 스타일 (흰색 바탕 라이트 테마 유지) */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -13,7 +13,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         }
         body {
-            background-color: #f5f5f7; /* 연회색 바탕 */
+            background-color: #f5f5f7;
             color: #1d1d1f;
             display: flex;
             justify-content: center;
@@ -24,42 +24,43 @@
 
         /* 2. 대시보드 메인 카드 */
         .container {
-            background-color: #ffffff; /* 흰색 바탕 상자 */
+            background-color: #ffffff;
             padding: 35px 30px;
             border-radius: 32px;
             width: 100%;
             max-width: 380px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.03);
             display: flex;
-            flex-direction: column; /* 세로모드일 때는 위에서 아래로 */
+            flex-direction: column;
             transition: all 0.3s ease;
         }
 
-        /* 3. 가로모드(Landscape) 레이아웃 분리 규칙 */
+        /* 3. 가로모드(Landscape) 레이아웃 - 버튼 슬림화 적용 */
         @media (orientation: landscape) {
             .container {
-                flex-direction: row; /* 가로모드일 때 좌우 배치 */
-                max-width: 650px;
+                flex-direction: row;
+                max-width: 680px; /* 시인성을 위해 전체 가로폭 살짝 조정 */
                 padding: 35px;
-                gap: 30px;
+                gap: 25px;
             }
             .display-panel {
-                flex: 2; /* 왼쪽 데이터 영역 공간 확보 */
+                flex: 2.2; /* 왼쪽 데이터 영역을 훨씬 더 넓게 할당 */
                 justify-content: space-between;
             }
             .status-icon-section {
-                margin-bottom: 0 !important; /* 하단 여백 제거하여 정렬 균형 맞춤 */
+                margin-bottom: 0 !important;
             }
             .control-panel {
-                flex: 0.8; /* 오른쪽 버튼 영역 공간 확보 */
+                flex: 0.45; /* ★ 핵심 수정: 기존 0.8에서 0.45로 줄여 버튼을 가로로 슬림하게 변경 */
             }
             .connect-btn {
-                height: 100% !important; /* 버튼 높이를 세로로 꽉 채움 */
-                writing-mode: vertical-lr; /* 글자 세로 방향 배열 */
+                height: 100% !important; /* 세로로 꽉 차는 피드백은 그대로 유지 */
+                writing-mode: vertical-lr;
                 text-orientation: upright;
-                letter-spacing: 4px;
-                font-size: 18px !important;
-                border-radius: 24px !important;
+                letter-spacing: 6px; /* 슬림해진 폭에 맞춰 글자 간격 조정 */
+                font-size: 15px !important; /* 폰트 크기 최적화 */
+                border-radius: 20px !important;
+                padding: 0 !important;
             }
         }
 
@@ -130,7 +131,7 @@
             width: 32px;
             height: 32px;
             margin-bottom: 6px;
-            fill: #8e8e93; /* 기본 비활성화 회색 아이콘 */
+            fill: #8e8e93;
             transition: all 0.3s ease;
         }
         .status-label {
@@ -145,7 +146,7 @@
             width: 100%;
         }
         .connect-btn {
-            background-color: #0071e3; /* 애플 오리지널 블루 */
+            background-color: #0071e3;
             color: #ffffff;
             border: none;
             padding: 14px 0;
@@ -160,7 +161,7 @@
             align-items: center;
         }
         .connect-btn.active {
-            background-color: #34c759; /* 연결 성공 시 초록색 변환 */
+            background-color: #34c759;
         }
     </style>
 </head>
@@ -253,14 +254,12 @@
                 document.getElementById('safeSpeed').innerText = safeSpeed;
                 document.getElementById('currentSpeed').innerText = currentSpeed;
                 
-                // 브레이크 상황 문구 최적화 폰트 크기 조정
                 if(currentSpeed === "브레이크") {
                     document.getElementById('currentSpeed').style.fontSize = "50px";
                 } else {
                     document.getElementById('currentSpeed').style.fontSize = "110px";
                 }
 
-                // 조도 센서 컬러 변환 (밤일 때 빨간색 발광)
                 const lightIcon = document.getElementById('lightIcon');
                 if (lightVal < 300) {
                     lightIcon.style.fill = '#ff3b30';
@@ -270,7 +269,6 @@
                     lightIcon.style.filter = 'none';
                 }
 
-                // 강수 센서 컬러 변환 (비올 때 파란색 발광)
                 const rainIcon = document.getElementById('rainIcon');
                 if (rainVal === '1') {
                     rainIcon.style.fill = '#007aff';
@@ -280,19 +278,18 @@
                     rainIcon.style.filter = 'none';
                 }
 
-                // 노면 미끄러움 3단계 강도 컬러 변환
                 const slipIcon = document.getElementById('slipIcon');
                 if (slipVal === '1') {
-                    slipIcon.style.fill = '#ffcc00'; // 노란색
+                    slipIcon.style.fill = '#ffcc00';
                     slipIcon.style.filter = 'none';
                 } else if (slipVal === '2') {
-                    slipIcon.style.fill = '#ff9500'; // 주황색
+                    slipIcon.style.fill = '#ff9500';
                     slipIcon.style.filter = 'none';
                 } else if (slipVal === '3') {
-                    slipIcon.style.fill = '#ff3b30'; // 빨간색 위험
+                    slipIcon.style.fill = '#ff3b30';
                     slipIcon.style.filter = 'drop-shadow(0 0 6px rgba(255,59,48,0.5))';
                 } else {
-                    slipIcon.style.fill = '#8e8e93'; // 기본 정상 노면
+                    slipIcon.style.fill = '#8e8e93';
                     slipIcon.style.filter = 'none';
                 }
             }
