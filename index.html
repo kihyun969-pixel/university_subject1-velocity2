@@ -1,207 +1,180 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PM 안전 속도 안내 시스템</title>
-    <style>
-        /* [Apple Style 기본 베이스] 구글/애플 시스템 서체 및 연한 회색 배경 */
-        body { 
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
-            background-color: #f5f5f7; /* 애플 고유의 라이트 그레이 */
-            color: #1d1d1f; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, SafeAreaView, useWindowDimensions } from 'react-native';
+import { BleManager } from 'react-native-ble-plx';
+import base64 from 'react-native-base64';
 
-        /* [메인 카드 패널] 부드러운 모서리와 은은한 그림자 */
-        .container { 
-            background-color: #ffffff; 
-            padding: 45px 30px; 
-            border-radius: 24px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.03); 
-            width: 85%;
-            max-width: 360px; 
-            text-align: center;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        /* 타이틀: 애플 스타일의 차분한 서브 텍스트 */
-        h2 { 
-            font-size: 20px; 
-            font-weight: 600; 
-            color: #86868b; /* 애플 미디움 그레이 */
-            margin: 0 0 8px 0; 
-            letter-spacing: -0.5px;
-        }
-
-        /* 속도 숫자: 굵고 거대하게 강조 */
-        .speed-display { 
-            font-size: 110px; 
-            font-weight: 700; 
-            color: #ff3b30; /* 시인성이 높은 애플 레드 */
-            line-height: 1; 
-            margin: 5px 0; 
-            letter-spacing: -3px;
-        }
-
-        /* 단위 표시 */
-        .unit { 
-            font-size: 22px; 
-            font-weight: 600; 
-            color: #1d1d1f; 
-            margin-bottom: 35px;
-        }
-
-        /* [Apple Style 알약 모양 버튼] 블루 고유 컬러와 둥근 엣지 */
-        button { 
-            background-color: #0071e3; /* 애플 링크 블루 */
-            color: white; 
-            font-size: 15px; 
-            font-weight: 500; 
-            padding: 14px 32px; 
-            border: none; 
-            border-radius: 980px; 
-            cursor: pointer; 
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 12px rgba(0, 113, 227, 0.15);
-        }
-
-        button:active { 
-            background-color: #0062c3; 
-            transform: scale(0.97); /* 누를 때 쫀득한 클릭감 추가 */
-        }
-
-        /* 로그 메시지 창 */
-        .status { 
-            color: #86868b; 
-            font-size: 13px; 
-            margin-top: 15px; 
-            margin-bottom: 0;
-            font-weight: 400;
-        }
-
-        /* ==========================================================================
-           [핵심] 스마트폰 가로모드(Landscape) 최적화 스타일 
-           ========================================================================== */
-        @media (orientation: landscape) {
-            .container { 
-                max-width: 640px; 
-                width: 90%;
-                padding: 35px 50px;
-                display: flex; /* 가로로 정렬 방식 전환 */
-                flex-direction: row;
-                align-items: center;
-                justify-content: space-between;
-                text-align: left;
-            }
-            
-            .main-info {
-                flex: 1.2;
-            }
-            
-            .control-info {
-                flex: 0.8;
-                display: flex;
-                flex-direction: column;
-                align-items: flex-end; /* 우측 정렬 */
-                justify-content: center;
-            }
-
-            h2 { 
-                font-size: 22px; 
-                margin-bottom: 0px;
-            }
-
-            /* 가로모드일 때 숫자를 훨씬 더 대형화(140px)하여 가시성 확보 */
-            .speed-display { 
-                font-size: 140px; 
-                margin: -5px 0;
-            }
-
-            .unit { 
-                font-size: 24px; 
-                margin-bottom: 0;
-                margin-top: -5px;
-            }
-
-            button {
-                font-size: 16px;
-                padding: 16px 36px;
-            }
-
-            .status {
-                text-align: right;
-                margin-top: 12px;
-            }
-        }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <div class="main-info">
-        <h2>현재 구역 안전 속도</h2>
-        <div class="speed-display" id="speedLimit">--</div>
-        <div class="unit">km/h</div>
-    </div>
-    
-    <div class="control-info">
-        <button onclick="connectBLE()">블루투스 연결하기</button>
-        <p class="status" id="statusLog">연결 대기 중...</p>
-    </div>
-</div>
-
-<script>
 const UUID_SERVICE = "0000ffe0-0000-1000-8000-00805f9b34fb";
 const UUID_CHARACTERISTIC = "0000ffe1-0000-1000-8000-00805f9b34fb";
 
-let bluetoothDevice = null;
-let rxCharacteristic = null;
+const manager = new BleManager();
 
-async function connectBLE() {
-    const log = document.getElementById('statusLog');
-    try {
-        log.innerText = "기기 검색 중...";
-        bluetoothDevice = await navigator.bluetooth.requestDevice({
-            acceptAllDevices: true,
-            optionalServices: [UUID_SERVICE]
-        });
+export default function App() {
+  // 5가지 센서 데이터 상태 관리
+  const [safeSpeed, setSafeSpeed] = useState('--');
+  const [currentSpeed, setCurrentSpeed] = useState('--');
+  const [lightVal, setLightVal] = useState(500);    // 기본 조도값 (밝음)
+  const [rainVal, setRainVal] = useState('0');      // 기본 강수 (비 안옴)
+  const [slipVal, setSlipVal] = useState('0');      // 기본 미끄러움 (안미끄러움)
+  
+  const [statusLog, setStatusLog] = useState('Wait for connection...');
+  const [isConnected, setIsConnected] = useState(false);
+  
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
-        log.innerText = "서버 연결 중...";
-        const server = await bluetoothDevice.gatt.connect();
+  useEffect(() => {
+    return () => { manager.stopDeviceScan(); };
+  }, []);
 
-        log.innerText = "서비스 가져오는 중...";
-        const service = await server.getPrimaryService(UUID_SERVICE);
+  // [각 아이콘의 색상 및 기호 로직 정의]
 
-        log.innerText = "특성 가져오는 중...";
-        rxCharacteristic = await service.getCharacteristic(UUID_CHARACTERISTIC);
+  // 1. 조도 아이콘 컬러 세팅 (💡)
+  // 어두워지면(300 미만) 밤(빨간색), 밝아지면 낮(회색)
+  const lightIconColor = lightVal < 300 ? '#ff3b30' : '#8e8e93';
 
-        await rxCharacteristic.startNotifications();
-        rxCharacteristic.addEventListener('characteristicvaluechanged', handleDataReceived);
+  // 2. 강수 아이콘 컬러 세팅 (💧)
+  // 비가 오면(빗물센서 값 '1') 파란색, 안오면('0') 회색
+  const rainIconColor = rainVal === '1' ? '#007aff' : '#8e8e93';
 
-        log.innerText = "연결 성공! 수신 중...";
-    } catch (error) {
-        log.innerText = "오류 발생: " + error;
-        console.error(error);
-    }
+  // 3. 미끄러움 아이콘 컬러 세팅 (⚠️)
+  // 안미끄러움('0') 회색, 약간('1') 노란색, 더('2') 주황색, 완전('3') 빨간색
+  const getSlipIconColor = () => {
+    if (slipVal === '1') return '#ffcc00'; // Apple Yellow
+    if (slipVal === '2') return '#ff9500'; // Apple Orange
+    if (slipVal === '3') return '#ff3b30'; // Apple Red
+    return '#8e8e93';                     // Apple Grey (기본)
+  };
+  const slipIconColor = getSlipIconColor();
+
+  const connectBLE = async () => {
+    setStatusLog('Scanning...');
+    manager.startDeviceScan(null, null, (error, device) => {
+      if (error) {
+        setStatusLog('Error: ' + error.message);
+        return;
+      }
+
+      if (device.serviceUUIDs && device.serviceUUIDs.includes(UUID_SERVICE)) {
+        manager.stopDeviceScan();
+        setStatusLog('Connecting...');
+
+        device.connect()
+          .then((currDevice) => currDevice.discoverAllServicesAndCharacteristics())
+          .then((currDevice) => {
+            setStatusLog('Connected!');
+            setIsConnected(true);
+            
+            currDevice.monitorCharacteristicForService(
+              UUID_SERVICE,
+              UUID_CHARACTERISTIC,
+              (err, characteristic) => {
+                if (err) {
+                  setStatusLog('RX Error: ' + err.message);
+                  return;
+                }
+                if (characteristic.value) {
+                  const decodedData = base64.decode(characteristic.value).trim();
+                  
+                  // 아두이노 송신 포맷 파싱: "안전속도,현재속도,조도값,빗물값,미끄러움레벨"
+                  const dataArray = decodedData.split(',');
+                  if (dataArray.length >= 5) {
+                    setSafeSpeed(dataArray[0]);
+                    setCurrentSpeed(dataArray[1]);
+                    setLightVal(Number(dataArray[2]));
+                    setRainVal(dataArray[3]);
+                    setSlipVal(dataArray[4]);
+                  }
+                }
+              }
+            );
+          })
+          .catch((err) => {
+            setStatusLog('Failed: ' + err.message);
+            setIsConnected(false);
+          });
+      }
+    });
+  };
+
+  return (
+    <SafeAreaView style={styles.background}>
+      <View style={[styles.container, isLandscape && styles.containerLandscape]}>
+        
+        {/* 속도 표시 섹션 (현재속도를 가장 크고 웅장하게, 안전속도는 옆에 단정하게 배치) */}
+        <View style={styles.speedSection}>
+          <View style={styles.row}>
+            <View style={styles.speedBox}>
+              <Text style={styles.label}>현재 속도</Text>
+              <Text style={styles.currentSpeedDisplay}>{currentSpeed}</Text>
+            </View>
+            <View style={[styles.speedBox, styles.safeSpeedBorder]}>
+              <Text style={styles.label}>안전 속도</Text>
+              <Text style={styles.safeSpeedDisplay}>{safeSpeed}</Text>
+            </View>
+          </View>
+          <Text style={styles.unit}>km/h</Text>
+        </View>
+
+        {/* 하단 환경 상태 아이콘 섹션 (가운데 정렬된 3개의 동적 색상 기호) */}
+        <View style={styles.statusIconSection}>
+          {/* 조도 아이콘 (💡) */}
+          <View style={styles.iconWidget}>
+            <Text style={[styles.statusIcon, { color: lightIconColor }]}>💡</Text>
+            <Text style={styles.statusLabel}>환경</Text>
+          </View>
+
+          {/* 강수 아이콘 (💧) */}
+          <View style={styles.iconWidget}>
+            <Text style={[styles.statusIcon, { color: rainIconColor }]}>💧</Text>
+            <Text style={styles.statusLabel}>강수</Text>
+          </View>
+
+          {/* 미끄러움 아이콘 (⚠️) */}
+          <View style={styles.iconWidget}>
+            <Text style={[styles.statusIcon, { color: slipIconColor }]}>⚠️</Text>
+            <Text style={styles.statusLabel}>노면</Text>
+          </View>
+        </View>
+
+        {/* 제어 버튼 */}
+        <TouchableOpacity 
+          style={[styles.button, isConnected && styles.buttonConnected]} 
+          onPress={connectBLE}
+        >
+          <Text style={styles.buttonText}>{isConnected ? '시스템 가동 중' : '블루투스 연결'}</Text>
+        </TouchableOpacity>
+        <Text style={styles.status}>{statusLog}</Text>
+
+      </View>
+    </SafeAreaView>
+  );
 }
 
-function handleDataReceived(event) {
-    const value = event.target.value;
-    const decoder = new TextDecoder('utf-8');
-    const receivedData = decoder.decode(value).trim(); 
-    
-    console.log("아두이노가 보낸 값:", receivedData);
-    
-    if (receivedData.length > 0) {
-        document.getElementById('speedLimit').innerText = receivedData;
-    }
-}
-</script>
-</body>
-</html>
+const styles = StyleSheet.create({
+  background: { flex: 1, backgroundColor: '#f5f5f7', justifyContent: 'center', alignItems: 'center' },
+  container: { backgroundColor: '#ffffff', padding: 30, borderRadius: 32, width: '92%', maxWidth: 380, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 30, elevation: 3 },
+  containerLandscape: { maxWidth: 700, width: '95%', padding: 40 },
+  
+  // 속도 레이아웃 스타일
+  speedSection: { alignItems: 'center', width: '100%', marginBottom: 30 },
+  row: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', width: '100%' },
+  speedBox: { alignItems: 'center', paddingHorizontal: 15 },
+  safeSpeedBorder: { borderLeftWidth: 1, borderLeftColor: '#e5e5ea', marginLeft: 10 },
+  
+  label: { fontSize: 13, fontWeight: '600', color: '#86868b', marginBottom: 5 },
+  currentSpeedDisplay: { fontSize: 110, fontWeight: '800', color: '#1d1d1f', letterSpacing: -4, lineHeight: 110 },
+  safeSpeedDisplay: { fontSize: 55, fontWeight: '700', color: '#ff3b30', letterSpacing: -2, lineHeight: 60 },
+  unit: { fontSize: 18, fontWeight: '700', color: '#1d1d1f', marginTop: 10 },
+
+  // 상태 아이콘 섹션 스타일
+  statusIconSection: { flexDirection: 'row', justifyContent: 'center', width: '80%', marginBottom: 35, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#f2f2f7', paddingVertical: 20 },
+  iconWidget: { alignItems: 'center', marginHorizontal: 25 },
+  statusIcon: { fontSize: 26, marginBottom: 8 },
+  statusLabel: { fontSize: 12, fontWeight: '600', color: '#a1a1a6' },
+
+  // 버튼 및 상태창
+  button: { backgroundColor: '#0071e3', paddingVertical: 14, paddingHorizontal: 40, borderRadius: 980, marginTop: 5 },
+  buttonConnected: { backgroundColor: '#34c759' },
+  buttonText: { color: '#ffffff', fontSize: 15, fontWeight: '600' },
+  status: { color: '#86868b', fontSize: 12, marginTop: 12 }
+});
